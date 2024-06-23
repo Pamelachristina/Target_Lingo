@@ -1,41 +1,35 @@
 const express = require("express");
 const router = express.Router();
 const Translation = require("../models/Translation");
-
-// Get all translations
-router.get("/", async (req, res) => {
-  try {
-    const translations = await Translation.findAll();
-    res.json(translations);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Get a single translation
-router.get("/:id", async (req, res) => {
-  try {
-    const translation = await Translation.findByPk(req.params.id);
-    if (translation) {
-      res.json(translation);
-    } else {
-      res.status(404).json({ message: "Translation not found" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+const { generateTranslation } = require("../services/groqService");
 
 // Create a new translation
-router.post("/", async (req, res) => {
+router.post("/api/translate", async (req, res) => {
   try {
-    const newTranslation = await Translation.create(req.body);
+    const { originalText, fromLanguage, toLanguage } = req.body;
+
+    // Perform translation using Groq API
+    const translatedText = await generateTranslation(
+      originalText,
+      fromLanguage,
+      toLanguage
+    );
+
+    // Save to database
+    const newTranslation = await Translation.create({
+      originalText,
+      translatedText,
+      fromLanguage,
+      toLanguage,
+    });
+
     res.status(201).json(newTranslation);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error("Translation error:", error);
+    res
+      .status(500)
+      .json({ message: "Error during translation", error: error.message });
   }
 });
-
-// Add more routes as needed
 
 module.exports = router;

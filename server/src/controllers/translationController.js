@@ -1,5 +1,6 @@
 const axios = require("axios");
 
+// Function to perform translation using Groq API
 const generateTranslation = async (text, sourceLang, targetLang) => {
   try {
     const response = await axios.post(

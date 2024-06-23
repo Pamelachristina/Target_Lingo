@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const sequelize = require("./config/database");
+const sequelize = require("./src/config/database");
 require("dotenv").config({ path: "../.env" });
 
 const app = express();
@@ -10,6 +10,7 @@ console.log("Environment variables:", {
   PORT: process.env.PORT,
   DATABASE_URL: process.env.DATABASE_URL,
   NODE_ENV: process.env.NODE_ENV,
+  GROQ_API_KEY: process.env.GROQ_API_KEY ? "Set" : "Not set",
 });
 
 // Middleware
@@ -22,10 +23,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Test database connection
+// Test database connection and sync models
 sequelize
   .authenticate()
-  .then(() => console.log("Database connected."))
+  .then(() => {
+    console.log("Database connected.");
+    return sequelize.sync({ alter: true });
+  })
+  .then(() => {
+    console.log("Database synchronized.");
+  })
   .catch((err) => console.error("Unable to connect to the database:", err));
 
 // Sample route
@@ -40,7 +47,7 @@ app.get("/test", (req, res) => {
 
 // Routes
 const translationsRouter = require("./src/routes/translations");
-app.use("/api/translations", translationsRouter);
+app.use("/", translationsRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
